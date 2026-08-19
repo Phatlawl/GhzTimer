@@ -1,4 +1,4 @@
-// Émission du bip sonore via Web Audio API
+// Bip sonore via Web Audio API
 function playBeep(freq = 880, duration = 0.2) {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -7,7 +7,7 @@ function playBeep(freq = 880, duration = 0.2) {
     
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
     
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -19,7 +19,7 @@ function playBeep(freq = 880, duration = 0.2) {
   }
 }
 
-// Variables d'état
+// État de l'application
 let workout = [];
 let currentBlockIndex = 0;
 let currentRound = 1;
@@ -29,62 +29,56 @@ let isRunning = false;
 let isPrepPhase = false;
 let prepCountdown = 10;
 
-// Éléments DOM
+// Éléments du DOM
 const display = document.getElementById('timer-display');
 const status = document.getElementById('timer-status');
 const progressRingSvg = document.getElementById('progress-ring-svg');
 const circle = document.querySelector('.progress-ring__circle');
 const wodBuilder = document.getElementById('wod-builder');
+const blockList = document.getElementById('block-list');
 
-const CIRCUMFERENCE = 2 * Math.PI * 90; // ~565.48
+const CIRCUMFERENCE = 2 * Math.PI * 95; // ~596.9
 
 const startBtn = document.getElementById('start-btn');
 const pauseBtn = document.getElementById('pause-btn');
 const resetBtn = document.getElementById('reset-btn');
 
-const blockTypeSelect = document.getElementById('block-type');
-const blockForm = document.getElementById('block-form');
-const blockList = document.getElementById('block-list');
-
-// Mise à jour de l'anneau de progression
+// Gestion du cercle de progression
 function setProgress(percent) {
   const offset = CIRCUMFERENCE - (percent * CIRCUMFERENCE);
-  circle.style.strokeDashoffset = offset;
+  circle.style.strokeDashoffset = Math.max(0, offset);
 }
 
-// Formatage du temps mm:ss
+// Formatage du temps en mm:ss
 function formatTime(sec) {
   const m = Math.floor(sec / 60).toString().padStart(2, '0');
   const s = (sec % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 }
 
-// Bascule des champs du formulaire selon le type
-blockTypeSelect.addEventListener('change', (e) => {
-  const type = e.target.value;
-  document.querySelectorAll('.type-inputs').forEach(el => el.classList.add('hidden'));
-  document.getElementById(`inputs-${type.toLowerCase()}`).classList.remove('hidden');
+// Ajout des blocs via les 4 cartes (+)
+document.getElementById('add-emom-btn').addEventListener('click', () => {
+  const rounds = parseInt(document.getElementById('emom-rounds').value) || 10;
+  const duration = parseInt(document.getElementById('emom-duration').value) || 60;
+  workout.push({ type: 'EMOM', rounds, duration });
+  renderBlockList();
 });
 
-// Ajout d'un bloc au programme
-blockForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const type = blockTypeSelect.value;
-  let block = { type };
+document.getElementById('add-amrap-btn').addEventListener('click', () => {
+  const durationMin = parseInt(document.getElementById('amrap-duration').value) || 10;
+  workout.push({ type: 'AMRAP', duration: durationMin * 60 });
+  renderBlockList();
+});
 
-  if (type === 'EMOM') {
-    block.rounds = parseInt(document.getElementById('emom-rounds').value) || 10;
-    block.duration = parseInt(document.getElementById('emom-duration').value) || 60;
-  } else if (type === 'AMRAP') {
-    block.duration = (parseInt(document.getElementById('amrap-duration').value) || 10) * 60;
-  } else if (type === 'FORTIME') {
-    const cap = parseInt(document.getElementById('fortime-cap').value);
-    block.timeCap = cap ? cap * 60 : null;
-  } else if (type === 'REST') {
-    block.duration = parseInt(document.getElementById('rest-duration').value) || 60;
-  }
+document.getElementById('add-fortime-btn').addEventListener('click', () => {
+  const capInput = parseInt(document.getElementById('fortime-cap').value);
+  workout.push({ type: 'FORTIME', timeCap: capInput ? capInput * 60 : null });
+  renderBlockList();
+});
 
-  workout.push(block);
+document.getElementById('add-rest-btn').addEventListener('click', () => {
+  const duration = parseInt(document.getElementById('rest-duration').value) || 60;
+  workout.push({ type: 'REST', duration });
   renderBlockList();
 });
 
@@ -94,13 +88,14 @@ function renderBlockList() {
     const item = document.createElement('div');
     item.className = 'block-item';
     let detail = '';
+    
     if (b.type === 'EMOM') detail = `${b.rounds} tours x ${b.duration}s`;
     else if (b.type === 'AMRAP') detail = `${b.duration / 60} min`;
-    else if (b.type === 'FORTIME') detail = b.timeCap ? `Time Cap : ${b.timeCap / 60} min` : 'Pas de Time Cap';
+    else if (b.type === 'FORTIME') detail = b.timeCap ? `Cap : ${b.timeCap / 60} min` : 'Sans Cap';
     else if (b.type === 'REST') detail = `${b.duration}s`;
 
     item.innerHTML = `
-      <span><strong>${b.type}</strong> - ${detail}</span>
+      <span><strong style="color:var(--accent);">${b.type}</strong> — ${detail}</span>
       <button onclick="removeBlock(${index})">X</button>
     `;
     blockList.appendChild(item);
@@ -112,9 +107,9 @@ window.removeBlock = function(index) {
   renderBlockList();
 };
 
-// Logique d'exécution
+// Cycle de fonctionnement du chrono
 function tick() {
-  // Phase de décompte initial (10s)
+  // Phase de décompte initial de 10s
   if (isPrepPhase) {
     prepCountdown--;
     display.textContent = formatTime(prepCountdown);
@@ -129,7 +124,7 @@ function tick() {
     return;
   }
 
-  // Fin du programme complet
+  // Séance terminée
   if (currentBlockIndex >= workout.length) {
     clearInterval(timer);
     isRunning = false;
@@ -148,7 +143,7 @@ function tick() {
     const roundElapsed = elapsedSeconds % block.duration === 0 ? block.duration : elapsedSeconds % block.duration;
     display.textContent = formatTime(block.duration - roundElapsed);
     
-    // Le cercle se remplit sur chaque tour
+    // Le cercle se remplit à chaque tour
     setProgress(roundElapsed / block.duration);
 
     if (elapsedSeconds % block.duration === 0) {
@@ -204,13 +199,13 @@ function nextBlock() {
   elapsedSeconds = 0;
 }
 
-// Actions des boutons
+// Contrôles
 startBtn.addEventListener('click', () => {
   if (isRunning || workout.length === 0) return;
   
   isRunning = true;
   
-  // Masquage du builder / Affichage du cercle
+  // Masque le configurateur et affiche le cercle visuel
   wodBuilder.classList.add('hidden');
   progressRingSvg.classList.remove('hidden');
 
@@ -240,7 +235,7 @@ resetBtn.addEventListener('click', () => {
   isPrepPhase = false;
   prepCountdown = 10;
 
-  // Réaffichage de la liste et masquage du cercle
+  // Réaffiche le configurateur et masque le cercle
   wodBuilder.classList.remove('hidden');
   progressRingSvg.classList.add('hidden');
 
