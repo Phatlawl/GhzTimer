@@ -1,4 +1,4 @@
-// Bip sonore via Web Audio API
+// Audio : Émission d'un bip sonore
 function playBeep(freq = 880, duration = 0.2) {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -15,12 +15,13 @@ function playBeep(freq = 880, duration = 0.2) {
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
-    console.error("Erreur AudioContext :", e);
+    console.error("Erreur Audio :", e);
   }
 }
 
 // État de l'application
 let workout = [];
+let editingIndex = null;
 let currentBlockIndex = 0;
 let currentRound = 1;
 let elapsedSeconds = 0;
@@ -28,77 +29,61 @@ let timer = null;
 let isRunning = false;
 let isPrepPhase = false;
 let prepCountdown = 10;
+let currentModalType = null;
 
 // Éléments du DOM
+const builderScreen = document.getElementById('builder-screen');
+const timerScreen = document.getElementById('timer-screen');
+const blockList = document.getElementById('block-list');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalInputs = document.getElementById('modal-inputs');
+
 const display = document.getElementById('timer-display');
 const status = document.getElementById('timer-status');
-const progressRingSvg = document.getElementById('progress-ring-svg');
 const circle = document.querySelector('.progress-ring__circle');
-const wodBuilder = document.getElementById('wod-builder');
-const blockList = document.getElementById('block-list');
-
 const CIRCUMFERENCE = 2 * Math.PI * 95; // ~596.9
 
-const startBtn = document.getElementById('start-btn');
-const pauseBtn = document.getElementById('pause-btn');
-const resetBtn = document.getElementById('reset-btn');
+// Icônes SVG pour Crayon et Poubelle
+const iconPencil = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+const iconTrash = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
-// Gestion du cercle de progression
+// Affichage/Mise à jour du cercle
 function setProgress(percent) {
   const offset = CIRCUMFERENCE - (percent * CIRCUMFERENCE);
   circle.style.strokeDashoffset = Math.max(0, offset);
 }
 
-// Formatage du temps en mm:ss
 function formatTime(sec) {
   const m = Math.floor(sec / 60).toString().padStart(2, '0');
   const s = (sec % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 }
 
-// Ajout des blocs via les 4 cartes (+)
-document.getElementById('add-emom-btn').addEventListener('click', () => {
-  const rounds = parseInt(document.getElementById('emom-rounds').value) || 10;
-  const duration = parseInt(document.getElementById('emom-duration').value) || 60;
-  workout.push({ type: 'EMOM', rounds, duration });
-  renderBlockList();
-});
-
-document.getElementById('add-amrap-btn').addEventListener('click', () => {
-  const durationMin = parseInt(document.getElementById('amrap-duration').value) || 10;
-  workout.push({ type: 'AMRAP', duration: durationMin * 60 });
-  renderBlockList();
-});
-
-document.getElementById('add-fortime-btn').addEventListener('click', () => {
-  const capInput = parseInt(document.getElementById('fortime-cap').value);
-  workout.push({ type: 'FORTIME', timeCap: capInput ? capInput * 60 : null });
-  renderBlockList();
-});
-
-document.getElementById('add-rest-btn').addEventListener('click', () => {
-  const duration = parseInt(document.getElementById('rest-duration').value) || 60;
-  workout.push({ type: 'REST', duration });
-  renderBlockList();
-});
-
+// Rendu de la liste des blocs
 function renderBlockList() {
   blockList.innerHTML = '';
   workout.forEach((b, index) => {
-    const item = document.createElement('div');
-    item.className = 'block-item';
-    let detail = '';
+    const card = document.createElement('div');
+    card.className = `block-card ${b.type}`;
     
-    if (b.type === 'EMOM') detail = `${b.rounds} tours x ${b.duration}s`;
-    else if (b.type === 'AMRAP') detail = `${b.duration / 60} min`;
-    else if (b.type === 'FORTIME') detail = b.timeCap ? `Cap : ${b.timeCap / 60} min` : 'Sans Cap';
-    else if (b.type === 'REST') detail = `${b.duration}s`;
+    let detailText = '';
+    if (b.type === 'FORTIME') detailText = b.timeCap ? `Time Cap: ${b.timeCap / 60} min` : 'Pas de Time Cap';
+    else if (b.type === 'EMOM') detailText = `${b.rounds} tours x ${b.duration}s`;
+    else if (b.type === 'AMRAP') detailText = `Durée: ${b.duration / 60} min`;
+    else if (b.type === 'REST') detailText = `Durée: ${b.duration} sec`;
 
-    item.innerHTML = `
-      <span><strong style="color:var(--accent);">${b.type}</strong> — ${detail}</span>
-      <button onclick="removeBlock(${index})">X</button>
+    card.innerHTML = `
+      <div class="block-info">
+        <div class="block-header">${index + 1}. ${b.type}</div>
+        <div class="block-details">${detailText}</div>
+      </div>
+      <div class="block-actions">
+        <button class="action-btn" onclick="editBlock(${index})" title="Modifier">${iconPencil}</button>
+        <button class="action-btn" onclick="removeBlock(${index})" title="Supprimer">${iconTrash}</button>
+      </div>
     `;
-    blockList.appendChild(item);
+    blockList.appendChild(card);
   });
 }
 
@@ -107,9 +92,114 @@ window.removeBlock = function(index) {
   renderBlockList();
 };
 
-// Cycle de fonctionnement du chrono
+window.editBlock = function(index) {
+  editingIndex = index;
+  openModal(workout[index].type, workout[index]);
+};
+
+// Gestion de la Modal
+document.querySelectorAll('.grid-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    editingIndex = null;
+    openModal(btn.dataset.type);
+  });
+});
+
+function openModal(type, data = null) {
+  currentModalType = type;
+  modalTitle.textContent = editingIndex !== null ? `Modifier ${type}` : `Ajouter ${type}`;
+  modalInputs.innerHTML = '';
+
+  if (type === 'FORTIME') {
+    const capVal = data && data.timeCap ? data.timeCap / 60 : '';
+    modalInputs.innerHTML = `
+      <div class="modal-input-group">
+        <label>Time Cap en minutes (optionnel)</label>
+        <input type="number" id="input-cap" placeholder="Ex: 10" value="${capVal}" min="1">
+      </div>`;
+  } else if (type === 'EMOM') {
+    const roundsVal = data ? data.rounds : 10;
+    const durVal = data ? data.duration : 60;
+    modalInputs.innerHTML = `
+      <div class="modal-input-group">
+        <label>Nombre de tours</label>
+        <input type="number" id="input-rounds" value="${roundsVal}" min="1">
+      </div>
+      <div class="modal-input-group">
+        <label>Durée d'un tour (sec)</label>
+        <input type="number" id="input-duration" value="${durVal}" min="1">
+      </div>`;
+  } else if (type === 'AMRAP') {
+    const durVal = data ? data.duration / 60 : 10;
+    modalInputs.innerHTML = `
+      <div class="modal-input-group">
+        <label>Durée totale (minutes)</label>
+        <input type="number" id="input-duration" value="${durVal}" min="1">
+      </div>`;
+  } else if (type === 'REST') {
+    const durVal = data ? data.duration : 60;
+    modalInputs.innerHTML = `
+      <div class="modal-input-group">
+        <label>Durée du repos (secondes)</label>
+        <input type="number" id="input-duration" value="${durVal}" min="1">
+      </div>`;
+  }
+
+  modalOverlay.classList.remove('hidden');
+}
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  modalOverlay.classList.add('hidden');
+});
+
+document.getElementById('modal-save').addEventListener('click', () => {
+  let block = { type: currentModalType };
+
+  if (currentModalType === 'FORTIME') {
+    const cap = parseInt(document.getElementById('input-cap').value);
+    block.timeCap = cap ? cap * 60 : null;
+  } else if (currentModalType === 'EMOM') {
+    block.rounds = parseInt(document.getElementById('input-rounds').value) || 10;
+    block.duration = parseInt(document.getElementById('input-duration').value) || 60;
+  } else if (currentModalType === 'AMRAP') {
+    block.duration = (parseInt(document.getElementById('input-duration').value) || 10) * 60;
+  } else if (currentModalType === 'REST') {
+    block.duration = parseInt(document.getElementById('input-duration').value) || 60;
+  }
+
+  if (editingIndex !== null) {
+    workout[editingIndex] = block;
+  } else {
+    workout.push(block);
+  }
+
+  modalOverlay.classList.add('hidden');
+  renderBlockList();
+});
+
+// Exécution de la Séance
+document.getElementById('launch-btn').addEventListener('click', () => {
+  if (workout.length === 0) return;
+
+  builderScreen.classList.add('hidden');
+  timerScreen.classList.remove('hidden');
+
+  isRunning = true;
+  currentBlockIndex = 0;
+  currentRound = 1;
+  elapsedSeconds = 0;
+  isPrepPhase = true;
+  prepCountdown = 10;
+
+  status.textContent = "Départ dans...";
+  display.textContent = formatTime(10);
+  setProgress(0);
+
+  timer = setInterval(tick, 1000);
+});
+
 function tick() {
-  // Phase de décompte initial de 10s
+  // Décompte initial de 10 secondes
   if (isPrepPhase) {
     prepCountdown--;
     display.textContent = formatTime(prepCountdown);
@@ -124,7 +214,7 @@ function tick() {
     return;
   }
 
-  // Séance terminée
+  // Fin du programme
   if (currentBlockIndex >= workout.length) {
     clearInterval(timer);
     isRunning = false;
@@ -199,47 +289,27 @@ function nextBlock() {
   elapsedSeconds = 0;
 }
 
-// Contrôles
-startBtn.addEventListener('click', () => {
-  if (isRunning || workout.length === 0) return;
-  
-  isRunning = true;
-  
-  // Masque le configurateur et affiche le cercle visuel
-  wodBuilder.classList.add('hidden');
-  progressRingSvg.classList.remove('hidden');
-
-  if (currentBlockIndex === 0 && elapsedSeconds === 0 && !isPrepPhase) {
-    isPrepPhase = true;
-    prepCountdown = 10;
-    status.textContent = "Départ dans...";
-    display.textContent = formatTime(10);
-    setProgress(0);
+// Boutons Pause / Réinitialiser
+document.getElementById('pause-btn').addEventListener('click', (e) => {
+  if (isRunning) {
+    clearInterval(timer);
+    isRunning = false;
+    status.textContent = "Pause";
+    e.target.textContent = "Reprendre";
+  } else {
+    timer = setInterval(tick, 1000);
+    isRunning = true;
+    e.target.textContent = "Pause";
   }
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  clearInterval(timer);
+  isRunning = false;
   
-  timer = setInterval(tick, 1000);
-});
-
-pauseBtn.addEventListener('click', () => {
-  isRunning = false;
-  clearInterval(timer);
-  status.textContent = "Pause";
-});
-
-resetBtn.addEventListener('click', () => {
-  isRunning = false;
-  clearInterval(timer);
-  currentBlockIndex = 0;
-  currentRound = 1;
-  elapsedSeconds = 0;
-  isPrepPhase = false;
-  prepCountdown = 10;
-
-  // Réaffiche le configurateur et masque le cercle
-  wodBuilder.classList.remove('hidden');
-  progressRingSvg.classList.add('hidden');
-
-  status.textContent = "Prêt";
-  display.textContent = "00:00";
+  timerScreen.classList.add('hidden');
+  builderScreen.classList.remove('hidden');
+  
+  document.getElementById('pause-btn').textContent = "Pause";
   setProgress(0);
 });
