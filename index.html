@@ -4,56 +4,66 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GhzTimer</title>
-  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <meta name="theme-color" content="#121212">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#18181b">
 </head>
 <body>
-  <div class="container">
-
-    <!-- Vue Configuration -->
-    <div id="setup-view">
-      
-      <div class="add-buttons">
-        <button onclick="addBlock('fortime')">+ For Time</button>
-        <button onclick="addBlock('amrap')">+ AMRAP</button>
-        <button onclick="addBlock('emom')">+ EMOM</button>
-        <button onclick="addBlock('rest')">+ Repos</button>
-      </div>
-
-      <div id="workout-list" class="workout-list">
-        <!-- Les blocs s'ajouteront ici -->
-      </div>
-
-      <button id="start-workout-btn" class="primary-btn" onclick="startWorkout()" style="display:none;">Lancer la séance</button>
-    </div>
-
-    <!-- Vue Entraînement en cours -->
-    <div id="active-view" style="display:none;">
-      <div id="block-info" class="block-info">Type de bloc</div>
-      <div id="timer-display" class="display">00:00</div>
-      <div id="sub-info" class="sub-info">--</div>
-      
-      <div class="controls">
-        <button id="pause-btn" onclick="togglePause()">Pause</button>
-        <button onclick="nextBlock()">Suivant</button>
-        <button onclick="resetWorkout()" class="danger-btn">Quitter</button>
+  <main id="app">
+    
+    <!-- Cercle de progression visuel -->
+    <div class="timer-container">
+      <svg class="progress-ring" width="280" height="280">
+        <circle class="progress-ring__bg" stroke="#27272a" stroke-width="14" fill="transparent" r="120" cx="140" cy="140"/>
+        <circle class="progress-ring__circle" stroke="#f97316" stroke-width="14" fill="transparent" r="120" cx="140" cy="140"/>
+      </svg>
+      <div class="timer-overlay">
+        <div id="timer-display">00:00</div>
+        <div id="timer-status">Prêt</div>
+        <div id="timer-substatus"></div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal pour modifier un bloc -->
-  <div id="edit-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3 id="modal-title">Modifier le bloc</h3>
-      <div id="modal-body"></div>
-      <div class="modal-actions">
-        <button onclick="saveModalEdit()" class="primary-btn">Enregistrer</button>
-        <button onclick="closeModal()">Annuler</button>
-      </div>
+    <div class="controls">
+      <button id="start-btn">Démarrer</button>
+      <button id="pause-btn">Pause</button>
+      <button id="reset-btn">Réinitialiser</button>
     </div>
-  </div>
+
+    <section id="wod-builder">
+      <h2>Ajouter un bloc</h2>
+      <form id="block-form">
+        <select id="block-type">
+          <option value="EMOM">EMOM</option>
+          <option value="AMRAP">AMRAP</option>
+          <option value="FORTIME">For Time</option>
+          <option value="REST">Repos</option>
+        </select>
+
+        <div id="inputs-emom" class="type-inputs">
+          <input type="number" id="emom-rounds" placeholder="Tours (ex: 10)" min="1">
+          <input type="number" id="emom-duration" placeholder="Durée d'un tour (sec)" value="60" min="1">
+        </div>
+
+        <div id="inputs-amrap" class="type-inputs hidden">
+          <input type="number" id="amrap-duration" placeholder="Durée totale (min)" min="1">
+        </div>
+
+        <div id="inputs-fortime" class="type-inputs hidden">
+          <input type="number" id="fortime-cap" placeholder="Time Cap optionnel (min)" min="1">
+        </div>
+
+        <div id="inputs-rest" class="type-inputs hidden">
+          <input type="number" id="rest-duration" placeholder="Durée repos (sec)" min="1">
+        </div>
+
+        <button type="submit" id="add-block-btn">Ajouter le bloc</button>
+      </form>
+
+      <h2>Programme</h2>
+      <div id="block-list"></div>
+    </section>
+  </main>
 
   <script src="app.js"></script>
   <script>
