@@ -86,15 +86,26 @@ const modalInputs = document.getElementById('modal-inputs');
 const display = document.getElementById('timer-display');
 const status = document.getElementById('timer-status');
 const circle = document.querySelector('.progress-ring__circle');
-const CIRCUMFERENCE = 2 * Math.PI * 95;
+
+// Rayon cohérent avec le SVG (r="95" -> circonférence = 2 * PI * 95)
+const RADIUS = 95;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+// Initialisation de la propriété SVG pour le stroke-dash
+if (circle) {
+  circle.style.strokeDasharray = `${CIRCUMFERENCE} ${CIRCUMFERENCE}`;
+  circle.style.strokeDashoffset = CIRCUMFERENCE;
+}
 
 // Icônes SVG
 const iconPencil = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 const iconTrash = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
 function setProgress(percent) {
-  const offset = CIRCUMFERENCE - (percent * CIRCUMFERENCE);
-  circle.style.strokeDashoffset = Math.max(0, offset);
+  // percent va de 0 à 1 (0 = vide, 1 = plein)
+  const clampedPercent = Math.min(Math.max(percent, 0), 1);
+  const offset = CIRCUMFERENCE - (clampedPercent * CIRCUMFERENCE);
+  circle.style.strokeDashoffset = offset;
 }
 
 function formatTime(sec) {
