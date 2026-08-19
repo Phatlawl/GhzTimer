@@ -1,46 +1,188 @@
 :root {
-  --bg-color: #0d0e12;
-  --card-bg: #181a20;
-  --card-border: #262933;
-  --accent: #00e676; /* Vert Néon Garmin */
-  --accent-glow: rgba(0, 230, 118, 0.25);
-  --text: #ffffff;
-  --text-muted: #8e8e93;
-  --danger: #ff3b30;
+  --bg-app: #1c1c1e;
+  --card-bg: #2c2c2e;
+  --card-hover: #3a3a3c;
+  --text-main: #ffffff;
+  --text-sub: #a0a0a5;
+  --primary-blue: #007bff;
+  
+  /* Couleurs des bordures latérales par type */
+  --color-fortime: #007bff;
+  --color-emom: #ff9500;
+  --color-rest: #34c759;
+  --color-amrap: #af52de;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text);
+  background-color: #121212;
+  color: var(--text-main);
   margin: 0;
-  padding: 1.25rem;
+  padding: 1rem;
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 #app {
+  background-color: var(--bg-app);
   width: 100%;
-  max-width: 440px;
+  max-width: 420px;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-sizing: border-box;
+}
+
+/* En-tête */
+.app-title {
+  color: var(--primary-blue);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0;
   text-align: center;
 }
 
-header h1 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-top: 0;
-  margin-bottom: 1rem;
+.app-subtitle {
+  color: var(--text-sub);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.4rem 0 1.2rem 0;
+  text-align: center;
 }
 
-/* Zone Chronomètre & Ring */
+/* Grille des 4 boutons d'ajout */
+.buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.2rem;
+}
+
+.grid-btn {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.grid-btn:hover {
+  background-color: var(--card-hover);
+}
+
+/* Liste des blocs défilante */
+.block-list-container {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 1.2rem;
+  padding-right: 4px;
+}
+
+/* Custom Scrollbar comme sur l'image */
+.block-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+.block-list-container::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+.block-list-container::-webkit-scrollbar-thumb {
+  background: #48484a;
+  border-radius: 4px;
+}
+
+/* Carte de bloc programmée */
+.block-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  border-left: 6px solid var(--primary-blue);
+}
+
+.block-card.FORTIME { border-left-color: var(--color-fortime); }
+.block-card.EMOM { border-left-color: var(--color-emom); }
+.block-card.REST { border-left-color: var(--color-rest); }
+.block-card.AMRAP { border-left-color: var(--color-amrap); }
+
+.block-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.block-header {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.block-details {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+}
+
+.block-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.action-btn:hover {
+  color: var(--text-main);
+}
+
+.action-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Bouton Lancer la séance */
+.launch-btn {
+  width: 100%;
+  background-color: var(--primary-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.launch-btn:hover {
+  opacity: 0.9;
+}
+
+/* Écran du timer actif */
 .timer-section {
   position: relative;
   width: 240px;
   height: 240px;
-  margin: 0.5rem auto 1.5rem auto;
+  margin: 1.5rem auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,176 +199,102 @@ header h1 {
   stroke-dasharray: 596.9; /* 2 * PI * 95 */
   stroke-dashoffset: 596.9;
   transition: stroke-dashoffset 0.2s linear;
-  filter: drop-shadow(0 0 6px var(--accent-glow));
 }
 
 .timer-display-box {
   z-index: 1;
+  text-align: center;
 }
 
 #timer-display {
-  font-size: 3.8rem;
+  font-size: 3.6rem;
   font-weight: 800;
+  color: var(--primary-blue);
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
   line-height: 1;
-  letter-spacing: -1px;
 }
 
 #timer-status {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  margin-top: 0.6rem;
-  color: var(--text);
+  margin-top: 0.5rem;
+  color: var(--text-sub);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-/* Boutons de contrôle */
+/* Boutons pendant la séance */
 .controls {
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 2rem;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
-.controls button {
+.ctrl-btn {
   flex: 1;
-  padding: 0.85rem 0.5rem;
-  font-size: 0.95rem;
-  font-weight: 700;
+  padding: 0.8rem;
   border-radius: 10px;
   border: none;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: transform 0.1s, opacity 0.15s;
 }
 
-.controls button:active {
-  transform: scale(0.97);
+.ctrl-btn.primary { background-color: var(--primary-blue); color: white; }
+.ctrl-btn.secondary { background-color: var(--card-bg); color: white; }
+.ctrl-btn.danger { background-color: #3a1c1e; color: #ff3b30; }
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
 }
 
-.btn-primary {
-  background-color: var(--accent);
-  color: #000;
-  box-shadow: 0 0 12px var(--accent-glow);
+.modal-content {
+  background: var(--bg-app);
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 340px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
 }
 
-.btn-secondary {
-  background-color: #2c2c2e;
-  color: var(--text);
+.modal-content h3 {
+  margin-top: 0;
+  color: var(--primary-blue);
 }
 
-.btn-danger {
-  background-color: #3a1c1e;
-  color: var(--danger);
-  border: 1px solid rgba(255, 59, 48, 0.3) !important;
-}
-
-/* Structure du WOD & 4 Cartes */
-#wod-builder {
+.modal-input-group {
+  margin-bottom: 1rem;
   text-align: left;
 }
 
-#wod-builder h2 {
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
+.modal-input-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 0.4rem;
 }
 
-.cards-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.block-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-}
-
-.card-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 0.5rem;
-}
-
-.card-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
-}
-
-.card-inputs input {
+.modal-input-group input {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.5rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid var(--card-border);
-  background: #0d0e12;
-  color: var(--text);
-  font-size: 0.85rem;
-}
-
-.card-inputs input::placeholder {
-  color: #555866;
-}
-
-.add-btn {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  padding: 0.4rem;
-  font-size: 1.2rem;
-  font-weight: 800;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-btn:hover {
-  opacity: 0.9;
-}
-
-/* Liste des blocs programmés */
-.block-item {
+  padding: 0.7rem;
   background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  padding: 0.75rem 1rem;
+  border: 1px solid #3a3a3c;
   border-radius: 8px;
-  margin-bottom: 0.5rem;
+  color: white;
+  font-size: 1rem;
+}
+
+.modal-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.block-item span {
-  font-size: 0.9rem;
-}
-
-.block-item button {
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid rgba(255, 59, 48, 0.4);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 700;
-  cursor: pointer;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
 }
 
 .hidden {
