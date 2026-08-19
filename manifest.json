@@ -1,6 +1,6 @@
 {
-  "name": "Chrono & Minuteur PWA",
-  "short_name": "ChronoPWA",
+  "name": "GhzTimer",
+  "short_name": "GhzTimer",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#121212",
