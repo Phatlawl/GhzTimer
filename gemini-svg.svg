@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Dégradés de couleurs -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#242426"/>
+      <stop offset="100%" stop-color="#0f0f10"/>
+    </linearGradient>
+    
+    <linearGradient id="flameOuter" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF2D55"/>
+      <stop offset="40%" stop-color="#FF9500"/>
+      <stop offset="100%" stop-color="#FFCC00"/>
+    </linearGradient>
+
+    <linearGradient id="flameInner" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF9500"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F2FE"/>
+      <stop offset="100%" stop-color="#4FACFE"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF9500" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FF9500" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fond icône carré arrondi -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="4"/>
+
+  <!-- Halo lumineux arrière-plan -->
+  <circle cx="256" cy="280" r="190" fill="url(#glow)"/>
+
+  <!-- FLAMMES -->
+  <!-- Flamme Gauche -->
+  <path d="M 210,120 C 160,170 130,240 145,310 C 150,335 165,360 185,380 C 160,340 155,290 170,240 C 180,200 210,150 210,120 Z" fill="url(#flameOuter)" opacity="0.85"/>
+  <!-- Flamme Droite -->
+  <path d="M 302,120 C 352,170 382,240 367,310 C 362,335 347,360 327,380 C 352,340 357,290 342,240 C 332,200 302,150 302,120 Z" fill="url(#flameOuter)" opacity="0.85"/>
+  <!-- Flamme Centrale -->
+  <path d="M 256,50 C 200,130 165,210 175,300 C 185,370 220,410 256,420 C 292,410 327,370 337,300 C 347,210 312,130 256,50 Z" fill="url(#flameOuter)"/>
+  <!-- Coeur incandescent -->
+  <path d="M 256,130 C 220,190 195,250 205,310 C 212,350 232,375 256,380 C 280,375 300,350 307,310 C 317,250 292,190 256,130 Z" fill="url(#flameInner)"/>
+
+  <!-- CHRONOMÈTRE -->
+  <!-- Bouton poussoir supérieur -->
+  <path d="M 236,180 C 236,160 276,160 276,180 Z" fill="none" stroke="#8e8e93" stroke-width="10" stroke-linecap="round"/>
+  <rect x="238" y="182" width="36" height="18" rx="4" fill="#a1a1a6"/>
+  <rect x="226" y="196" width="60" height="12" rx="4" fill="#636366"/>
+
+  <!-- Cadran principal -->
+  <circle cx="256" cy="320" r="105" fill="#1c1c1e" stroke="url(#cyanGrad)" stroke-width="14"/>
+  <circle cx="256" cy="320" r="90" fill="#0a0a0c"/>
+
+  <!-- Graduations -->
+  <line x1="256" y1="238" x2="256" y2="250" stroke="url(#cyanGrad)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="256" y1="390" x2="256" y2="402" stroke="#48484a" stroke-width="4" stroke-linecap="round"/>
+  <line x1="174" y1="320" x2="186" y2="320" stroke="#48484a" stroke-width="4" stroke-linecap="round"/>
+  <line x1="326" y1="320" x2="338" y2="320" stroke="url(#cyanGrad)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Arc de progression -->
+  <path d="M 256,238 A 82,82 0 0,1 338,320" fill="none" stroke="url(#cyanGrad)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Aiguille en mouvement -->
+  <line x1="256" y1="320" x2="305" y2="271" stroke="url(#cyanGrad)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Centre de l'aiguille -->
+  <circle cx="256" cy="320" r="10" fill="#00F2FE"/>
+  <circle cx="256" cy="320" r="4" fill="#ffffff"/>
+</svg>
