@@ -6,18 +6,20 @@
   <title>GhzTimer</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#18181b">
+  <meta name="theme-color" content="#0d0e12">
 </head>
 <body>
   <main id="app">
-    <h1>GhzTimer</h1>
+    <header>
+      <h1>GhzTimer</h1>
+    </header>
     
     <!-- Zone Chronomètre -->
     <div class="timer-section">
-      <!-- Cercle épais de progression (masqué au départ) -->
-      <svg id="progress-ring-svg" class="progress-ring hidden" width="220" height="220">
-        <circle class="progress-ring__bg" stroke="#27272a" stroke-width="14" fill="transparent" r="90" cx="110" cy="110"/>
-        <circle class="progress-ring__circle" stroke="#f97316" stroke-width="14" fill="transparent" r="90" cx="110" cy="110"/>
+      <!-- Cercle épais Garmin style (masqué hors séance) -->
+      <svg id="progress-ring-svg" class="progress-ring hidden" width="240" height="240">
+        <circle class="progress-ring__bg" stroke="#1f232d" stroke-width="16" fill="transparent" r="95" cx="120" cy="120"/>
+        <circle class="progress-ring__circle" stroke="#00e676" stroke-width="16" stroke-linecap="round" fill="transparent" r="95" cx="120" cy="120"/>
       </svg>
       
       <div class="timer-display-box">
@@ -26,44 +28,57 @@
       </div>
     </div>
 
+    <!-- Contrôles -->
     <div class="controls">
-      <button id="start-btn">Démarrer</button>
-      <button id="pause-btn">Pause</button>
-      <button id="reset-btn">Réinitialiser</button>
+      <button id="start-btn" class="btn-primary">Démarrer</button>
+      <button id="pause-btn" class="btn-secondary">Pause</button>
+      <button id="reset-btn" class="btn-danger">Réinitialiser</button>
     </div>
 
-    <!-- Programme et création de blocs (masqués pendant le workout) -->
+    <!-- Création de séance : 4 cartes avec bouton + -->
     <section id="wod-builder">
-      <h2>Structure de la séance</h2>
+      <h2>Ajouter un bloc</h2>
       
-      <form id="block-form">
-        <select id="block-type">
-          <option value="EMOM">EMOM</option>
-          <option value="AMRAP">AMRAP</option>
-          <option value="FORTIME">For Time</option>
-          <option value="REST">Repos</option>
-        </select>
-
-        <div id="inputs-emom" class="type-inputs">
-          <input type="number" id="emom-rounds" placeholder="Tours (ex : 10)" min="1">
-          <input type="number" id="emom-duration" placeholder="Durée d'un tour (sec)" value="60" min="1">
+      <div class="cards-grid">
+        <!-- Carte EMOM -->
+        <div class="block-card">
+          <div class="card-title">EMOM</div>
+          <div class="card-inputs">
+            <input type="number" id="emom-rounds" placeholder="Tours (ex : 10)" min="1">
+            <input type="number" id="emom-duration" placeholder="Durée tour (sec)" value="60" min="1">
+          </div>
+          <button type="button" class="add-btn" id="add-emom-btn">+</button>
         </div>
 
-        <div id="inputs-amrap" class="type-inputs hidden">
-          <input type="number" id="amrap-duration" placeholder="Durée totale (min)" min="1">
+        <!-- Carte AMRAP -->
+        <div class="block-card">
+          <div class="card-title">AMRAP</div>
+          <div class="card-inputs">
+            <input type="number" id="amrap-duration" placeholder="Durée (min)" min="1">
+          </div>
+          <button type="button" class="add-btn" id="add-amrap-btn">+</button>
         </div>
 
-        <div id="inputs-fortime" class="type-inputs hidden">
-          <input type="number" id="fortime-cap" placeholder="Time Cap optionnel (min)" min="1">
+        <!-- Carte For Time -->
+        <div class="block-card">
+          <div class="card-title">For Time</div>
+          <div class="card-inputs">
+            <input type="number" id="fortime-cap" placeholder="Cap min (optionnel)" min="1">
+          </div>
+          <button type="button" class="add-btn" id="add-fortime-btn">+</button>
         </div>
 
-        <div id="inputs-rest" class="type-inputs hidden">
-          <input type="number" id="rest-duration" placeholder="Durée repos (sec)" min="1">
+        <!-- Carte Repos -->
+        <div class="block-card">
+          <div class="card-title">Repos</div>
+          <div class="card-inputs">
+            <input type="number" id="rest-duration" placeholder="Durée (sec)" min="1">
+          </div>
+          <button type="button" class="add-btn" id="add-rest-btn">+</button>
         </div>
+      </div>
 
-        <button type="submit" id="add-block-btn">Ajouter le bloc</button>
-      </form>
-
+      <h2>Programme</h2>
       <div id="block-list"></div>
     </section>
   </main>
