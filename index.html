@@ -10,17 +10,16 @@
 </head>
 <body>
   <main id="app">
+    <h1>GhzTimer</h1>
     
-    <!-- Cercle de progression visuel -->
-    <div class="timer-container">
-      <svg class="progress-ring" width="280" height="280">
-        <circle class="progress-ring__bg" stroke="#27272a" stroke-width="14" fill="transparent" r="120" cx="140" cy="140"/>
-        <circle class="progress-ring__circle" stroke="#f97316" stroke-width="14" fill="transparent" r="120" cx="140" cy="140"/>
+    <div class="timer-wrapper">
+      <svg class="progress-ring" width="220" height="220">
+        <circle class="progress-ring__bg" stroke="#27272a" stroke-width="10" fill="transparent" r="95" cx="110" cy="110"/>
+        <circle class="progress-ring__circle" stroke="#f97316" stroke-width="10" fill="transparent" r="95" cx="110" cy="110"/>
       </svg>
-      <div class="timer-overlay">
+      <div class="timer-center">
         <div id="timer-display">00:00</div>
         <div id="timer-status">Prêt</div>
-        <div id="timer-substatus"></div>
       </div>
     </div>
 
@@ -31,7 +30,8 @@
     </div>
 
     <section id="wod-builder">
-      <h2>Ajouter un bloc</h2>
+      <h2>Structure de la séance</h2>
+      
       <form id="block-form">
         <select id="block-type">
           <option value="EMOM">EMOM</option>
@@ -60,7 +60,6 @@
         <button type="submit" id="add-block-btn">Ajouter le bloc</button>
       </form>
 
-      <h2>Programme</h2>
       <div id="block-list"></div>
     </section>
   </main>
