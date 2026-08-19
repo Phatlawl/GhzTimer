@@ -7,12 +7,15 @@
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1c1c1e">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
 </head>
 <body>
   <main id="app">
     <!-- ÉCRAN DE CRÉATION DE SÉANCE -->
     <div id="builder-screen">
-      
+      <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 0.5rem;">
+  <img src="icon.svg" alt="GhzTimer Logo" style="width: 36px; height: 36px;">
+   </div>
 
       <!-- Grille 2x2 des boutons d'ajout -->
       <div class="buttons-grid">
@@ -31,7 +34,6 @@
 
     <!-- ÉCRAN CHRONOMÈTRE (Affiché uniquement pendant la séance) -->
     <div id="timer-screen" class="hidden">
-      <h1 class="app-title">GhzTimer</h1>
       
       <div class="timer-section">
         <svg id="progress-ring-svg" class="progress-ring" width="240" height="240">
