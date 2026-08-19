@@ -1,6 +1,6 @@
 let audioCtx = null;
 
-// Initialisation et déverrouillage forcé pour iOS / Mobile
+// Initialisation et déverrouillage Web Audio pour iOS
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -9,7 +9,6 @@ function initAudio() {
     audioCtx.resume();
   }
   
-  // Astuce iOS Safari : jouer un buffer vide immédiatement sur le clic utilisateur
   const buffer = audioCtx.createBuffer(1, 1, 22050);
   const source = audioCtx.createBufferSource();
   source.buffer = buffer;
@@ -17,7 +16,7 @@ function initAudio() {
   source.start(0);
 }
 
-// Émission du bip sonore
+// Émission des bips
 function playBeep(freq = 880, duration = 0.25) {
   if (!audioCtx) return;
   
@@ -32,7 +31,6 @@ function playBeep(freq = 880, duration = 0.25) {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     
-    // Volume augmenté (0.6) avec fondu rapide pour éviter les craquements
     gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     
@@ -43,6 +41,24 @@ function playBeep(freq = 880, duration = 0.25) {
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
     console.error("Erreur Audio :", e);
+  }
+}
+
+// Gestion de l'affichage Plein Écran
+function requestFullScreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) {
+    el.requestFullscreen();
+  } else if (el.webkitRequestFullscreen) {
+    el.webkitRequestFullscreen();
+  }
+}
+
+function exitFullScreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
   }
 }
 
@@ -129,10 +145,10 @@ window.editBlock = function(index) {
   openModal(workout[index].type, workout[index]);
 };
 
-// Modal
+// Modale
 document.querySelectorAll('.grid-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    initAudio(); // Déverrouille aussi l'audio si l'utilisateur clique sur un bouton d'ajout
+  btn.addEventListener('click', () => {
+    initAudio();
     editingIndex = null;
     openModal(btn.dataset.type);
   });
@@ -220,9 +236,9 @@ document.getElementById('modal-save').addEventListener('click', () => {
 document.getElementById('launch-btn').addEventListener('click', () => {
   if (workout.length === 0) return;
 
-  // Déverrouillage Audio impératif
   initAudio();
-  playBeep(600, 0.1); // Test immédiat au clic pour valider la chaîne audio
+  playBeep(600, 0.1);
+  requestFullScreen();
 
   builderScreen.classList.add('hidden');
   timerScreen.classList.remove('hidden');
@@ -249,13 +265,12 @@ function tick() {
     status.textContent = "Départ dans...";
     setProgress((10 - prepCountdown) / 10);
 
-    // Bip court les 3 dernières secondes
     if (prepCountdown <= 3 && prepCountdown > 0) {
       playBeep(600, 0.15);
     }
 
     if (prepCountdown === 0) {
-      playBeep(1200, 0.4); // Bip aigu au départ
+      playBeep(1200, 0.4);
       isPrepPhase = false;
       phaseElapsedSeconds = 0;
     }
@@ -377,6 +392,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   clearInterval(timer);
   isRunning = false;
   
+  exitFullScreen();
+
   timerScreen.classList.add('hidden');
   builderScreen.classList.remove('hidden');
   
