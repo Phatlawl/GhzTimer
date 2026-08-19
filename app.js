@@ -24,7 +24,8 @@ let workout = [];
 let editingIndex = null;
 let currentBlockIndex = 0;
 let currentRound = 1;
-let elapsedSeconds = 0;
+let phaseElapsedSeconds = 0; // Temps écoulé dans la phase en cours (effort ou repos)
+let isEmomRest = false;      // Indique si on est dans la sous-phase de repos d'un tour EMOM
 let timer = null;
 let isRunning = false;
 let isPrepPhase = false;
@@ -48,7 +49,7 @@ const CIRCUMFERENCE = 2 * Math.PI * 95; // ~596.9
 const iconPencil = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 const iconTrash = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
-// Affichage/Mise à jour du cercle
+// Affichage / Mise à jour du cercle
 function setProgress(percent) {
   const offset = CIRCUMFERENCE - (percent * CIRCUMFERENCE);
   circle.style.strokeDashoffset = Math.max(0, offset);
@@ -68,10 +69,16 @@ function renderBlockList() {
     card.className = `block-card ${b.type}`;
     
     let detailText = '';
-    if (b.type === 'FORTIME') detailText = b.timeCap ? `Time Cap: ${b.timeCap / 60} min` : 'Pas de Time Cap';
-    else if (b.type === 'EMOM') detailText = `${b.rounds} tours x ${b.duration}s`;
-    else if (b.type === 'AMRAP') detailText = `Durée: ${b.duration / 60} min`;
-    else if (b.type === 'REST') detailText = `Durée: ${b.duration} sec`;
+    if (b.type === 'FORTIME') {
+      detailText = b.timeCap ? `Time Cap: ${b.timeCap / 60} min` : 'Pas de Time Cap';
+    } else if (b.type === 'EMOM') {
+      const restText = b.restDuration > 0 ? ` + ${b.restDuration}s repos` : '';
+      detailText = `${b.rounds} tours x ${b.duration}s${restText}`;
+    } else if (b.type === 'AMRAP') {
+      detailText = `Durée: ${b.duration / 60} min`;
+    } else if (b.type === 'REST') {
+      detailText = `Durée: ${b.duration} sec`;
+    }
 
     card.innerHTML = `
       <div class="block-info">
@@ -120,14 +127,19 @@ function openModal(type, data = null) {
   } else if (type === 'EMOM') {
     const roundsVal = data ? data.rounds : 10;
     const durVal = data ? data.duration : 60;
+    const restVal = data && data.restDuration ? data.restDuration : 0;
     modalInputs.innerHTML = `
       <div class="modal-input-group">
         <label>Nombre de tours</label>
         <input type="number" id="input-rounds" value="${roundsVal}" min="1">
       </div>
       <div class="modal-input-group">
-        <label>Durée d'un tour (sec)</label>
+        <label>Durée d'effort par tour (sec)</label>
         <input type="number" id="input-duration" value="${durVal}" min="1">
+      </div>
+      <div class="modal-input-group">
+        <label>Durée de repos par tour (sec, optionnel)</label>
+        <input type="number" id="input-rest" value="${restVal}" min="0">
       </div>`;
   } else if (type === 'AMRAP') {
     const durVal = data ? data.duration / 60 : 10;
@@ -161,6 +173,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
   } else if (currentModalType === 'EMOM') {
     block.rounds = parseInt(document.getElementById('input-rounds').value) || 10;
     block.duration = parseInt(document.getElementById('input-duration').value) || 60;
+    block.restDuration = parseInt(document.getElementById('input-rest').value) || 0;
   } else if (currentModalType === 'AMRAP') {
     block.duration = (parseInt(document.getElementById('input-duration').value) || 10) * 60;
   } else if (currentModalType === 'REST') {
@@ -187,7 +200,8 @@ document.getElementById('launch-btn').addEventListener('click', () => {
   isRunning = true;
   currentBlockIndex = 0;
   currentRound = 1;
-  elapsedSeconds = 0;
+  phaseElapsedSeconds = 0;
+  isEmomRest = false;
   isPrepPhase = true;
   prepCountdown = 10;
 
@@ -209,7 +223,7 @@ function tick() {
     if (prepCountdown === 0) {
       playBeep(1000, 0.4);
       isPrepPhase = false;
-      elapsedSeconds = 0;
+      phaseElapsedSeconds = 0;
     }
     return;
   }
@@ -226,30 +240,44 @@ function tick() {
   }
 
   const block = workout[currentBlockIndex];
-  elapsedSeconds++;
+  phaseElapsedSeconds++;
 
   if (block.type === 'EMOM') {
-    status.textContent = `EMOM - Tour ${currentRound}/${block.rounds}`;
-    const roundElapsed = elapsedSeconds % block.duration === 0 ? block.duration : elapsedSeconds % block.duration;
-    display.textContent = formatTime(block.duration - roundElapsed);
-    
-    // Le cercle se remplit à chaque tour
-    setProgress(roundElapsed / block.duration);
+    if (!isEmomRest) {
+      // Phase d'effort
+      status.textContent = `EMOM - Tour ${currentRound}/${block.rounds} (Effort)`;
+      const remaining = block.duration - phaseElapsedSeconds;
+      display.textContent = formatTime(remaining);
+      setProgress(phaseElapsedSeconds / block.duration);
 
-    if (elapsedSeconds % block.duration === 0) {
-      playBeep();
-      if (currentRound < block.rounds) {
-        currentRound++;
-      } else {
-        nextBlock();
+      if (remaining <= 0) {
+        playBeep();
+        if (block.restDuration > 0) {
+          isEmomRest = true;
+          phaseElapsedSeconds = 0;
+        } else {
+          advanceEmomRound(block);
+        }
+      }
+    } else {
+      // Phase de repos
+      status.textContent = `EMOM - Tour ${currentRound}/${block.rounds} (Repos)`;
+      const remaining = block.restDuration - phaseElapsedSeconds;
+      display.textContent = formatTime(remaining);
+      setProgress(phaseElapsedSeconds / block.restDuration);
+
+      if (remaining <= 0) {
+        playBeep();
+        isEmomRest = false;
+        advanceEmomRound(block);
       }
     }
   } 
   else if (block.type === 'AMRAP') {
     status.textContent = "AMRAP";
-    const remaining = block.duration - elapsedSeconds;
+    const remaining = block.duration - phaseElapsedSeconds;
     display.textContent = formatTime(remaining);
-    setProgress(elapsedSeconds / block.duration);
+    setProgress(phaseElapsedSeconds / block.duration);
 
     if (remaining <= 0) {
       playBeep();
@@ -258,23 +286,23 @@ function tick() {
   } 
   else if (block.type === 'FORTIME') {
     status.textContent = block.timeCap ? `For Time (Cap : ${formatTime(block.timeCap)})` : "For Time";
-    display.textContent = formatTime(elapsedSeconds);
+    display.textContent = formatTime(phaseElapsedSeconds);
 
     if (block.timeCap) {
-      setProgress(elapsedSeconds / block.timeCap);
-      if (elapsedSeconds >= block.timeCap) {
+      setProgress(phaseElapsedSeconds / block.timeCap);
+      if (phaseElapsedSeconds >= block.timeCap) {
         playBeep();
         nextBlock();
       }
     } else {
-      setProgress((elapsedSeconds % 60) / 60);
+      setProgress((phaseElapsedSeconds % 60) / 60);
     }
   } 
   else if (block.type === 'REST') {
     status.textContent = "Repos";
-    const remaining = block.duration - elapsedSeconds;
+    const remaining = block.duration - phaseElapsedSeconds;
     display.textContent = formatTime(remaining);
-    setProgress(elapsedSeconds / block.duration);
+    setProgress(phaseElapsedSeconds / block.duration);
 
     if (remaining <= 0) {
       playBeep();
@@ -283,10 +311,20 @@ function tick() {
   }
 }
 
+function advanceEmomRound(block) {
+  if (currentRound < block.rounds) {
+    currentRound++;
+    phaseElapsedSeconds = 0;
+  } else {
+    nextBlock();
+  }
+}
+
 function nextBlock() {
   currentBlockIndex++;
   currentRound = 1;
-  elapsedSeconds = 0;
+  phaseElapsedSeconds = 0;
+  isEmomRest = false;
 }
 
 // Boutons Pause / Réinitialiser
