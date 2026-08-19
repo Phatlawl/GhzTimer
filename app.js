@@ -1,18 +1,45 @@
-// Audio : Émission d'un bip sonore
-function playBeep(freq = 880, duration = 0.2) {
+let audioCtx = null;
+
+// Initialisation et déverrouillage forcé pour iOS / Mobile
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
+  // Astuce iOS Safari : jouer un buffer vide immédiatement sur le clic utilisateur
+  const buffer = audioCtx.createBuffer(1, 1, 22050);
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioCtx.destination);
+  source.start(0);
+}
+
+// Émission du bip sonore
+function playBeep(freq = 880, duration = 0.25) {
+  if (!audioCtx) return;
+  
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    
+    // Volume augmenté (0.6) avec fondu rapide pour éviter les craquements
+    gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     
-    osc.start();
+    osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
     console.error("Erreur Audio :", e);
@@ -24,8 +51,8 @@ let workout = [];
 let editingIndex = null;
 let currentBlockIndex = 0;
 let currentRound = 1;
-let phaseElapsedSeconds = 0; // Temps écoulé dans la phase en cours (effort ou repos)
-let isEmomRest = false;      // Indique si on est dans la sous-phase de repos d'un tour EMOM
+let phaseElapsedSeconds = 0;
+let isEmomRest = false;
 let timer = null;
 let isRunning = false;
 let isPrepPhase = false;
@@ -43,13 +70,12 @@ const modalInputs = document.getElementById('modal-inputs');
 const display = document.getElementById('timer-display');
 const status = document.getElementById('timer-status');
 const circle = document.querySelector('.progress-ring__circle');
-const CIRCUMFERENCE = 2 * Math.PI * 95; // ~596.9
+const CIRCUMFERENCE = 2 * Math.PI * 95;
 
-// Icônes SVG pour Crayon et Poubelle
+// Icônes SVG
 const iconPencil = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 const iconTrash = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
-// Affichage / Mise à jour du cercle
 function setProgress(percent) {
   const offset = CIRCUMFERENCE - (percent * CIRCUMFERENCE);
   circle.style.strokeDashoffset = Math.max(0, offset);
@@ -61,7 +87,6 @@ function formatTime(sec) {
   return `${m}:${s}`;
 }
 
-// Rendu de la liste des blocs
 function renderBlockList() {
   blockList.innerHTML = '';
   workout.forEach((b, index) => {
@@ -104,9 +129,10 @@ window.editBlock = function(index) {
   openModal(workout[index].type, workout[index]);
 };
 
-// Gestion de la Modal
+// Modal
 document.querySelectorAll('.grid-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', (e) => {
+    initAudio(); // Déverrouille aussi l'audio si l'utilisateur clique sur un bouton d'ajout
     editingIndex = null;
     openModal(btn.dataset.type);
   });
@@ -190,9 +216,13 @@ document.getElementById('modal-save').addEventListener('click', () => {
   renderBlockList();
 });
 
-// Exécution de la Séance
+// Lancement de la séance
 document.getElementById('launch-btn').addEventListener('click', () => {
   if (workout.length === 0) return;
+
+  // Déverrouillage Audio impératif
+  initAudio();
+  playBeep(600, 0.1); // Test immédiat au clic pour valider la chaîne audio
 
   builderScreen.classList.add('hidden');
   timerScreen.classList.remove('hidden');
@@ -213,22 +243,25 @@ document.getElementById('launch-btn').addEventListener('click', () => {
 });
 
 function tick() {
-  // Décompte initial de 10 secondes
   if (isPrepPhase) {
     prepCountdown--;
     display.textContent = formatTime(prepCountdown);
     status.textContent = "Départ dans...";
     setProgress((10 - prepCountdown) / 10);
 
+    // Bip court les 3 dernières secondes
+    if (prepCountdown <= 3 && prepCountdown > 0) {
+      playBeep(600, 0.15);
+    }
+
     if (prepCountdown === 0) {
-      playBeep(1000, 0.4);
+      playBeep(1200, 0.4); // Bip aigu au départ
       isPrepPhase = false;
       phaseElapsedSeconds = 0;
     }
     return;
   }
 
-  // Fin du programme
   if (currentBlockIndex >= workout.length) {
     clearInterval(timer);
     isRunning = false;
@@ -244,14 +277,13 @@ function tick() {
 
   if (block.type === 'EMOM') {
     if (!isEmomRest) {
-      // Phase d'effort
       status.textContent = `EMOM - Tour ${currentRound}/${block.rounds} (Effort)`;
       const remaining = block.duration - phaseElapsedSeconds;
       display.textContent = formatTime(remaining);
       setProgress(phaseElapsedSeconds / block.duration);
 
       if (remaining <= 0) {
-        playBeep();
+        playBeep(900, 0.25);
         if (block.restDuration > 0) {
           isEmomRest = true;
           phaseElapsedSeconds = 0;
@@ -260,14 +292,13 @@ function tick() {
         }
       }
     } else {
-      // Phase de repos
       status.textContent = `EMOM - Tour ${currentRound}/${block.rounds} (Repos)`;
       const remaining = block.restDuration - phaseElapsedSeconds;
       display.textContent = formatTime(remaining);
       setProgress(phaseElapsedSeconds / block.restDuration);
 
       if (remaining <= 0) {
-        playBeep();
+        playBeep(900, 0.25);
         isEmomRest = false;
         advanceEmomRound(block);
       }
@@ -280,7 +311,7 @@ function tick() {
     setProgress(phaseElapsedSeconds / block.duration);
 
     if (remaining <= 0) {
-      playBeep();
+      playBeep(900, 0.25);
       nextBlock();
     }
   } 
@@ -291,7 +322,7 @@ function tick() {
     if (block.timeCap) {
       setProgress(phaseElapsedSeconds / block.timeCap);
       if (phaseElapsedSeconds >= block.timeCap) {
-        playBeep();
+        playBeep(900, 0.25);
         nextBlock();
       }
     } else {
@@ -305,7 +336,7 @@ function tick() {
     setProgress(phaseElapsedSeconds / block.duration);
 
     if (remaining <= 0) {
-      playBeep();
+      playBeep(900, 0.25);
       nextBlock();
     }
   }
@@ -327,8 +358,9 @@ function nextBlock() {
   isEmomRest = false;
 }
 
-// Boutons Pause / Réinitialiser
+// Contrôles
 document.getElementById('pause-btn').addEventListener('click', (e) => {
+  initAudio();
   if (isRunning) {
     clearInterval(timer);
     isRunning = false;
