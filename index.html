@@ -6,72 +6,77 @@
   <title>GhzTimer</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1c1c1e">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
-  <main id="app">
-    <!-- ÉCRAN DE CRÉATION DE SÉANCE -->
-    <div id="builder-screen">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 0.5rem;">
-  <img src="icon.svg" alt="GhzTimer Logo" style="width: 36px; height: 36px;">
-   </div>
 
-      <!-- Grille 2x2 des boutons d'ajout -->
-      <div class="buttons-grid">
-        <button type="button" class="grid-btn" data-type="FORTIME">+ For Time</button>
-        <button type="button" class="grid-btn" data-type="AMRAP">+ AMRAP</button>
-        <button type="button" class="grid-btn" data-type="EMOM">+ EMOM</button>
-        <button type="button" class="grid-btn" data-type="REST">+ Repos</button>
+  <!-- Écran de création / Builder -->
+  <div id="builder-screen" class="container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="icon.svg" alt="GhzTimer Logo" class="app-logo">
       </div>
+    </header>
 
-      <!-- Liste déroulante des blocs -->
-      <div id="block-list" class="block-list-container"></div>
-
-      <!-- Bouton principal Lancer -->
-      <button id="launch-btn" class="launch-btn">Lancer la séance</button>
+    <div class="builder-grid">
+      <button class="grid-btn" data-type="FORTIME">For Time</button>
+      <button class="grid-btn" data-type="AMRAP">AMRAP</button>
+      <button class="grid-btn" data-type="EMOM">EMOM</button>
+      <button class="grid-btn" data-type="REST">Repos</button>
     </div>
 
-    <!-- ÉCRAN CHRONOMÈTRE (Affiché uniquement pendant la séance) -->
-    <div id="timer-screen" class="hidden">
-      
-      <div class="timer-section">
-        <svg id="progress-ring-svg" class="progress-ring" width="240" height="240">
-          <circle class="progress-ring__bg" stroke="#2c2c2e" stroke-width="16" fill="transparent" r="95" cx="120" cy="120"/>
-          <circle class="progress-ring__circle" stroke="#007bff" stroke-width="16" stroke-linecap="round" fill="transparent" r="95" cx="120" cy="120"/>
-        </svg>
-        
-        <div class="timer-display-box">
-          <div id="timer-display">00:00</div>
-          <div id="timer-status">Prêt</div>
-        </div>
-      </div>
+    <div id="block-list" class="block-list"></div>
 
-      <div class="controls">
-        <button id="pause-btn" class="ctrl-btn secondary">Pause</button>
-        <button id="reset-btn" class="ctrl-btn danger">Quitter</button>
-      </div>
+    <button id="launch-btn" class="primary-btn">Lancer la séance</button>
+  </div>
+
+  <!-- Écran du Chronomètre / Timer (Plein Écran) -->
+  <div id="timer-screen" class="hidden">
+    <div id="timer-status">Prêt ?</div>
+
+    <div class="timer-container">
+      <svg class="progress-ring" viewBox="0 0 220 220">
+        <circle
+          class="progress-ring__circle-bg"
+          stroke="#2c2c2e"
+          stroke-width="12"
+          fill="transparent"
+          r="95"
+          cx="110"
+          cy="110"
+        />
+        <circle
+          class="progress-ring__circle"
+          stroke="#00f2fe"
+          stroke-width="12"
+          fill="transparent"
+          r="95"
+          cx="110"
+          cy="110"
+        />
+      </svg>
+      <div id="timer-display">00:10</div>
     </div>
 
-    <!-- MODAL DE CONFIGURATION DU BLOC -->
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h3 id="modal-title">Ajouter un bloc</h3>
-        <div id="modal-inputs"></div>
-        <div class="modal-actions">
-          <button id="modal-cancel" class="ctrl-btn secondary">Annuler</button>
-          <button id="modal-save" class="ctrl-btn primary">Valider</button>
-        </div>
+    <div class="timer-controls">
+      <button id="pause-btn" class="secondary-btn">Pause</button>
+      <button id="reset-btn" class="danger-btn">Quitter</button>
+    </div>
+  </div>
+
+  <!-- Fenêtre Modale d'ajout/modification -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 id="modal-title">Ajouter un bloc</h2>
+      <div id="modal-inputs"></div>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="secondary-btn">Annuler</button>
+        <button id="modal-save" class="primary-btn">Enregistrer</button>
       </div>
     </div>
-  </main>
+  </div>
 
   <script src="app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
 </body>
 </html>
