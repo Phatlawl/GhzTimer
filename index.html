@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Chrono</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#121212">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+  <div class="container">
+    <h1>Chrono & Minuteur</h1>
+    
+    <div class="tabs">
+      <button id="tab-stopwatch" class="active" onclick="switchTab('stopwatch')">Chronomètre</button>
+      <button id="tab-timer" onclick="switchTab('timer')">Minuteur</button>
+    </div>
+
+    <!-- Section Chronomètre -->
+    <section id="section-stopwatch" class="tab-content active">
+      <div id="stopwatch-display" class="display">00:00:00.0</div>
+      <div class="controls">
+        <button id="sw-start-btn" onclick="startStopwatch()">Démarrer</button>
+        <button onclick="pauseStopwatch()">Pause</button>
+        <button onclick="resetStopwatch()">AZR</button>
+      </div>
+    </section>
+
+    <!-- Section Minuteur -->
+    <section id="section-timer" class="tab-content">
+      <div id="timer-display" class="display">05:00</div>
+      <div class="timer-inputs">
+        <input type="number" id="timer-min" placeholder="Min" min="0" value="5">
+        <input type="number" id="timer-sec" placeholder="Sec" min="0" max="59" value="0">
+      </div>
+      <div class="controls">
+        <button id="tm-start-btn" onclick="startTimer()">Démarrer</button>
+        <button onclick="pauseTimer()">Pause</button>
+        <button onclick="resetTimer()">AZR</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
