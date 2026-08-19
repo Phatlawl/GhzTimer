@@ -1,3 +1,4 @@
+// Émission du bip sonore via Web Audio API
 function playBeep(freq = 880, duration = 0.2) {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -14,10 +15,11 @@ function playBeep(freq = 880, duration = 0.2) {
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
-    console.error("Erreur audio", e);
+    console.error("Erreur AudioContext :", e);
   }
 }
 
+// Variables d'état
 let workout = [];
 let currentBlockIndex = 0;
 let currentRound = 1;
@@ -27,10 +29,14 @@ let isRunning = false;
 let isPrepPhase = false;
 let prepCountdown = 10;
 
+// Éléments DOM
 const display = document.getElementById('timer-display');
 const status = document.getElementById('timer-status');
+const progressRingSvg = document.getElementById('progress-ring-svg');
 const circle = document.querySelector('.progress-ring__circle');
-const CIRCUMFERENCE = 2 * Math.PI * 95;
+const wodBuilder = document.getElementById('wod-builder');
+
+const CIRCUMFERENCE = 2 * Math.PI * 90; // ~565.48
 
 const startBtn = document.getElementById('start-btn');
 const pauseBtn = document.getElementById('pause-btn');
@@ -40,23 +46,27 @@ const blockTypeSelect = document.getElementById('block-type');
 const blockForm = document.getElementById('block-form');
 const blockList = document.getElementById('block-list');
 
+// Mise à jour de l'anneau de progression
 function setProgress(percent) {
   const offset = CIRCUMFERENCE - (percent * CIRCUMFERENCE);
   circle.style.strokeDashoffset = offset;
 }
 
+// Formatage du temps mm:ss
 function formatTime(sec) {
   const m = Math.floor(sec / 60).toString().padStart(2, '0');
   const s = (sec % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 }
 
+// Bascule des champs du formulaire selon le type
 blockTypeSelect.addEventListener('change', (e) => {
   const type = e.target.value;
   document.querySelectorAll('.type-inputs').forEach(el => el.classList.add('hidden'));
   document.getElementById(`inputs-${type.toLowerCase()}`).classList.remove('hidden');
 });
 
+// Ajout d'un bloc au programme
 blockForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const type = blockTypeSelect.value;
@@ -86,7 +96,7 @@ function renderBlockList() {
     let detail = '';
     if (b.type === 'EMOM') detail = `${b.rounds} tours x ${b.duration}s`;
     else if (b.type === 'AMRAP') detail = `${b.duration / 60} min`;
-    else if (b.type === 'FORTIME') detail = b.timeCap ? `Time Cap: ${b.timeCap / 60} min` : 'Pas de Time Cap';
+    else if (b.type === 'FORTIME') detail = b.timeCap ? `Time Cap : ${b.timeCap / 60} min` : 'Pas de Time Cap';
     else if (b.type === 'REST') detail = `${b.duration}s`;
 
     item.innerHTML = `
@@ -102,11 +112,13 @@ window.removeBlock = function(index) {
   renderBlockList();
 };
 
+// Logique d'exécution
 function tick() {
+  // Phase de décompte initial (10s)
   if (isPrepPhase) {
     prepCountdown--;
     display.textContent = formatTime(prepCountdown);
-    status.textContent = "Décompte 10s";
+    status.textContent = "Départ dans...";
     setProgress((10 - prepCountdown) / 10);
 
     if (prepCountdown === 0) {
@@ -117,6 +129,7 @@ function tick() {
     return;
   }
 
+  // Fin du programme complet
   if (currentBlockIndex >= workout.length) {
     clearInterval(timer);
     isRunning = false;
@@ -134,6 +147,8 @@ function tick() {
     status.textContent = `EMOM - Tour ${currentRound}/${block.rounds}`;
     const roundElapsed = elapsedSeconds % block.duration === 0 ? block.duration : elapsedSeconds % block.duration;
     display.textContent = formatTime(block.duration - roundElapsed);
+    
+    // Le cercle se remplit sur chaque tour
     setProgress(roundElapsed / block.duration);
 
     if (elapsedSeconds % block.duration === 0) {
@@ -157,7 +172,7 @@ function tick() {
     }
   } 
   else if (block.type === 'FORTIME') {
-    status.textContent = block.timeCap ? `For Time (Cap: ${formatTime(block.timeCap)})` : "For Time";
+    status.textContent = block.timeCap ? `For Time (Cap : ${formatTime(block.timeCap)})` : "For Time";
     display.textContent = formatTime(elapsedSeconds);
 
     if (block.timeCap) {
@@ -189,14 +204,20 @@ function nextBlock() {
   elapsedSeconds = 0;
 }
 
+// Actions des boutons
 startBtn.addEventListener('click', () => {
   if (isRunning || workout.length === 0) return;
   
   isRunning = true;
+  
+  // Masquage du builder / Affichage du cercle
+  wodBuilder.classList.add('hidden');
+  progressRingSvg.classList.remove('hidden');
+
   if (currentBlockIndex === 0 && elapsedSeconds === 0 && !isPrepPhase) {
     isPrepPhase = true;
     prepCountdown = 10;
-    status.textContent = "Décompte 10s";
+    status.textContent = "Départ dans...";
     display.textContent = formatTime(10);
     setProgress(0);
   }
@@ -218,6 +239,11 @@ resetBtn.addEventListener('click', () => {
   elapsedSeconds = 0;
   isPrepPhase = false;
   prepCountdown = 10;
+
+  // Réaffichage de la liste et masquage du cercle
+  wodBuilder.classList.remove('hidden');
+  progressRingSvg.classList.add('hidden');
+
   status.textContent = "Prêt";
   display.textContent = "00:00";
   setProgress(0);
