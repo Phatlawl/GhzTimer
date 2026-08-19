@@ -12,12 +12,15 @@
   <main id="app">
     <h1>GhzTimer</h1>
     
-    <div class="timer-wrapper">
-      <svg class="progress-ring" width="220" height="220">
-        <circle class="progress-ring__bg" stroke="#27272a" stroke-width="10" fill="transparent" r="95" cx="110" cy="110"/>
-        <circle class="progress-ring__circle" stroke="#f97316" stroke-width="10" fill="transparent" r="95" cx="110" cy="110"/>
+    <!-- Zone Chronomètre -->
+    <div class="timer-section">
+      <!-- Cercle épais de progression (masqué au départ) -->
+      <svg id="progress-ring-svg" class="progress-ring hidden" width="220" height="220">
+        <circle class="progress-ring__bg" stroke="#27272a" stroke-width="14" fill="transparent" r="90" cx="110" cy="110"/>
+        <circle class="progress-ring__circle" stroke="#f97316" stroke-width="14" fill="transparent" r="90" cx="110" cy="110"/>
       </svg>
-      <div class="timer-center">
+      
+      <div class="timer-display-box">
         <div id="timer-display">00:00</div>
         <div id="timer-status">Prêt</div>
       </div>
@@ -29,6 +32,7 @@
       <button id="reset-btn">Réinitialiser</button>
     </div>
 
+    <!-- Programme et création de blocs (masqués pendant le workout) -->
     <section id="wod-builder">
       <h2>Structure de la séance</h2>
       
@@ -41,7 +45,7 @@
         </select>
 
         <div id="inputs-emom" class="type-inputs">
-          <input type="number" id="emom-rounds" placeholder="Tours (ex: 10)" min="1">
+          <input type="number" id="emom-rounds" placeholder="Tours (ex : 10)" min="1">
           <input type="number" id="emom-duration" placeholder="Durée d'un tour (sec)" value="60" min="1">
         </div>
 
