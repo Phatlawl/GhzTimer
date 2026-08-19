@@ -21,7 +21,8 @@ body {
   text-align: center;
 }
 
-.timer-wrapper {
+/* Zone du chronomètre & Cercle */
+.timer-section {
   position: relative;
   width: 220px;
   height: 220px;
@@ -39,13 +40,13 @@ body {
 }
 
 .progress-ring__circle {
-  stroke-dasharray: 596.9;
-  stroke-dashoffset: 596.9;
+  stroke-dasharray: 565.48; /* 2 * PI * 90 */
+  stroke-dashoffset: 565.48;
   transition: stroke-dashoffset 0.2s linear;
   stroke-linecap: round;
 }
 
-.timer-center {
+.timer-display-box {
   z-index: 1;
 }
 
@@ -59,13 +60,14 @@ body {
 
 #timer-status {
   font-size: 1rem;
-  color: var(--text);
-  margin-top: 0.5rem;
   font-weight: 600;
+  margin-top: 0.5rem;
+  color: var(--text);
 }
 
+/* Contrôles & Formulaire */
 .controls {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .controls button, #add-block-btn {
