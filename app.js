@@ -414,33 +414,46 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   setProgress(0);
 });
 
-//screen ne s'éteint pas
-let wakeLock = null;
 
-async function requestWakeLock() {
+//screen wake
+let wakeLock = null;
+let dummyVideo = null;
+
+async function enableNoSleep() {
+  // 1. Tenter l'API standard Screen Wake Lock
   if ('wakeLock' in navigator) {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
-    } catch (err) {
-      console.error(`${err.name}, ${err.message}`);
+    } catch (e) {
+      console.log('WakeLock refusé, passage au fallback vidéo');
     }
   }
+
+  // 2. Fallback universel iOS (flux canvas silencieux)
+  if (!dummyVideo) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    ctx.fillRect(0, 0, 1, 1);
+
+    const stream = canvas.captureStream(1);
+    dummyVideo = document.createElement('video');
+    dummyVideo.setAttribute('playsinline', '');
+    dummyVideo.setAttribute('muted', '');
+    dummyVideo.muted = true;
+    dummyVideo.srcObject = stream;
+  }
+
+  dummyVideo.play().catch(() => {});
 }
 
-async function releaseWakeLock() {
-  if (wakeLock !== null) {
-    try {
-      await wakeLock.release();
-      wakeLock = null;
-    } catch (err) {
-      console.error(`${err.name}, ${err.message}`);
-    }
+function disableNoSleep() {
+  if (wakeLock) {
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
+  if (dummyVideo) {
+    dummyVideo.pause();
   }
 }
-
-// Ré-acquérir automatiquement le verrou si l'application revient au premier plan
-document.addEventListener('visibilitychange', async () => {
-  if (wakeLock !== null && document.visibilityState === 'visible' && isRunning) {
-    await requestWakeLock();
-  }
-});
