@@ -250,6 +250,7 @@ document.getElementById('launch-btn').addEventListener('click', () => {
   initAudio();
   playBeep(600, 0.1);
   requestFullScreen();
+  requestWakeLock();
 
   builderScreen.classList.add('hidden');
   timerScreen.classList.remove('hidden');
@@ -404,7 +405,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   isRunning = false;
   
   exitFullScreen();
-
+  releaseWakeLock();
+  
   timerScreen.classList.add('hidden');
   builderScreen.classList.remove('hidden');
   
