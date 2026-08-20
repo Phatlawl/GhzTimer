@@ -411,3 +411,34 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.getElementById('pause-btn').textContent = "Pause";
   setProgress(0);
 });
+
+//screen ne s'éteint pas
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock !== null) {
+    try {
+      await wakeLock.release();
+      wakeLock = null;
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  }
+}
+
+// Ré-acquérir automatiquement le verrou si l'application revient au premier plan
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible' && isRunning) {
+    await requestWakeLock();
+  }
+});
